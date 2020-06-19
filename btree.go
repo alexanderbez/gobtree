@@ -5,11 +5,11 @@ import (
 	"sync"
 )
 
-// BTree implements a self-balancing search tree. It maintains sorted data and
-// allows searches, sequential access, insertions, and deletions in logarithmic
-// time. A BTree is specified by having a mimimum degree t, where t depends on
-// disk block size or some other metric. The following properties hold with
-// regard to t:
+// BTree implements a thread-safe self-balancing search tree. It maintains sorted
+// data and allows searches, sequential access, insertions, and deletions in
+// logarithmic time. A BTree is specified by having a mimimum degree t, where t
+// depends on disk block size or some other metric. The following properties hold
+// with regard to t:
 //
 // - Every node except root must contain at least t-1 keys. The root may contain
 // minimum 1 key.
@@ -37,18 +37,22 @@ func New(t int) (*BTree, error) {
 	}, nil
 }
 
+// Size returns the total number of nodes in the BTree.
 func (bt *BTree) Size() int {
 	bt.mu.RLock()
 	defer bt.mu.RUnlock()
 	return bt.size
 }
 
+// Depth returns the depth or height of the BTree.
 func (bt *BTree) Depth() int {
 	bt.mu.RLock()
 	defer bt.mu.RUnlock()
 	return bt.depth
 }
 
+// Search performs a lookup of the given Entry in the BTree. If the Entry exists,
+// a non-nil Entry will be returned.
 func (bt *BTree) Search(e Entry) Entry {
 	bt.mu.RLock()
 	defer bt.mu.RUnlock()
@@ -70,6 +74,9 @@ func (bt *BTree) Search(e Entry) Entry {
 	return nil
 }
 
+// Insert inserts an Entry into the BTree. If the provided Entry is nil, then
+// the method performs a no-op. If the Entry already exists, it will be replaced
+// with the provided Entry. Otherwise, the new Entry will be inserted.
 func (bt *BTree) Insert(e Entry) {
 	if e == nil {
 		return
